@@ -8,6 +8,7 @@ import process
 import time_stamp
 from time_stamp import TIME_STAMP
 
+
 def diff(prev, current):
     """
     :param prev: previouse time stamp
@@ -36,7 +37,7 @@ def get_current_services():
     return process_list
 
 
-if __name__ == '__main__':
+def monitor(time_diff):
     current_time = time.clock()
     current_process_list = get_current_services()
     current_time_stamp = time_stamp.get_from_dict({current_time, current_process_list})
@@ -54,5 +55,34 @@ if __name__ == '__main__':
             file.write(json.dumps(diffs))
 
         previouse_time_stamp = current_time_stamp
-        time.sleep(30)
+        time.sleep(time_diff)
 
+
+def manual(start_time, end_time):
+    start_dict = {}
+    end_dict = {}
+    with open('serviceList.txt', 'r') as file:
+        main_dict = file.read()
+    for k, v in main_dict:
+        if k == start_time:
+            start_dict = v
+        if k == end_time:
+            end_dict = v
+    start_ts = time_stamp.get_from_dict(start_dict)
+    end_ts = time_stamp.get_from_dict(end_dict)
+    return diff(start_ts, end_ts)
+
+
+if __name__ == '__main__':
+    mode = input("Hello user, please choose a mode \n 2 - monitor \n 1 - manual \n 0 - exit")
+    if mode == 0:
+        exit()
+    elif mode == 1:
+        start = input("Please enter the first date in d/m/Y H:M:S format")
+        end = input("Please enter the second date in d/m/Y H:M:S format")
+        manual(start, end)
+    elif mode == 2:
+        timer = input("Please enter frequency check in seconds: ")
+        monitor(timer)
+    else:
+        print("are you stupid?")
