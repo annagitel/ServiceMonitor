@@ -1,7 +1,6 @@
-import time
+from time import strptime
 
 import process
-from process import PROCESS
 
 
 class TIME_STAMP:
@@ -10,22 +9,23 @@ class TIME_STAMP:
         self.pro_list = pro_list
 
     def get_as_dict(self):
-        pro_dict = {}
-        for process in self.pro_list:
-            pro_dict.update(process.get_as_dict())
-        return {self.time, pro_dict}
+        pro_string_list = []
+        for pro in self.pro_list:
+            pro_string_list.append(pro)
+        return {self.time.strftime("%d/%m/%Y %H:%M:%S"), pro_string_list}
 
-    def add_process(self, process):
-        self.pro_list.appand(process)
+    def add_process(self, pro):
+        self.pro_list.appand(pro)
+        print(type(self.pro_list))
 
 
 def get_from_dict(time_stamp_dict):
     ts = TIME_STAMP()
     pro_dict = time_stamp_dict.values()[0]
     t = time_stamp_dict.keys()[0]
-    ts.time = t
+    ts.time = strptime(t, '%m/%d/%y %H:%M:%S')
     for k, v in pro_dict:
         pro = process.get_from_dict(pro_dict={k, v})
-        ts.add_process(process=pro)
+        ts.add_process(pro=pro)
 
     return ts

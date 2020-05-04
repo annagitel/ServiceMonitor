@@ -1,95 +1,69 @@
-import os
-import platform
+from datetime import datetime
 import time
-import subprocess
-import json
 import psutil
 import process
-import time_stamp
 from time_stamp import TIME_STAMP
 
 
-def diff(prev, current):
-    """
-    :param prev: previouse time stamp
-    :param current: current time stamp
-    :return: list of diffs between 2 time stemps
-    """
-    diff = []
-    for pro in prev.pro_list:
-        if pro not in current.pro_list:
-            diff.append(pro.pid + "has stopped between" + prev.time + " and " + current.time)
-    for pro in current.pro_list:
-        if process not in prev.pro_list:
-            diff.append(pro.pid + "has started between" + prev.time + " and " + current.time)
-    return diff
+def diff(older, newer):
+
+    diff_list = []
+    for pro in older.pro_list:
+        if pro not in newer.pro_list:
+            diff_list.append(pro.pid + " has stopped between " + older.time + " and " + newer.time)
+    for pro in newer.pro_list:
+        if process not in older.pro_list:
+            diff_list.append(pro.pid + "has started between" + older.time + " and " + newer.time)
+    return diff_list
 
 
 def get_current_services():
-    process_list = {}
+    process_list = []
     for proc in psutil.process_iter():
-        try:
-            processName = str(proc.name)
-            processID = proc.pid
-            process_list.update({processName: processID})
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-            pass
+        process_list.append(proc.as_dict(['pid', 'name']))
     return process_list
 
 
 def write_to_serviceList(ts_obj):
-    pass
+    file = open("serviceList", "a")
+    file.write(ts_obj.get_as_dict + "\n")
+    file.close()
 
 
 def write_to_statusLog(diff_list):
-    pass
+    file = open("Status_Log.txt", "a")
+    file.write(diff_list + "\n")
+    file.close()
 
 
 def monitor(time_diff):
     crnt_ts = TIME_STAMP
     prev_ts = crnt_ts
     while True:
-        current_time = time.clock()
+        current_time = datetime.now()
         pro_list = get_current_services()
         crnt_ts = TIME_STAMP(time=current_time, pro_list=pro_list)
-        write_to_serviceList(current_time)
+
+        write_to_serviceList(crnt_ts.get_as_dict())
+
         diffs = diff(crnt_ts, prev_ts)
         write_to_statusLog(diffs)
+
         prev_ts = crnt_ts
-
-"""
-    current_process_list = get_current_services()
-    current_time_stamp = time_stamp.get_from_dict({current_time,current_process_list})
-    previouse_time_stamp = current_time_stamp
-
-    while True:
-        current_time = time.time()
-        current_process = get_current_services()
-        with open('serviceList.txt', 'w') as file:
-            file.write(json.dumps(current_process))
-        # make the part above more OO
-
-        diffs = diff(previouse_time_stamp, current_time_stamp)
-        with open('status_log.txt', 'w') as file:
-            file.write(json.dumps(diffs))
-
-        previouse_time_stamp = current_time_stamp
-        time.sleep(time_diff)"""
+        time.sleep(time_diff)
 
 
 def manual(start_time, end_time):
-    start_dict = {}
-    end_dict = {}
-    with open('serviceList.txt', 'r') as file:
-        main_dict = file.read()
-    for k, v in main_dict:
-        if k == start_time:
-            start_dict = v
-        if k == end_time:
-            end_dict = v
-    start_ts = time_stamp.get_from_dict(start_dict)
-    end_ts = time_stamp.get_from_dict(end_dict)
-    return diff(start_ts, end_ts)
+    log_list = []
+    file = open("Status_Log.txt", "r")
+    for _ in file:
+        log = file.readline()
+        splited = log.split(' ')
+        older = splited[4]
+        newer = splited[6]
+        if older > start_time and newer < end_time:
+            log_list.append(log.split('between')[0])
+    return log_list
 
 
 if __name__ == '__main__':
