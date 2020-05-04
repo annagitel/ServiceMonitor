@@ -1,19 +1,18 @@
 from datetime import datetime
 import time
 import psutil
-import process
-from time_stamp import TIME_STAMP
 
 
 def diff(older, newer):
-
     diff_list = []
-    for pro in older.pro_list:
-        if pro not in newer.pro_list:
-            diff_list.append(pro.pid + " has stopped between " + older.time + " and " + newer.time)
-    for pro in newer.pro_list:
-        if process not in older.pro_list:
-            diff_list.append(pro.pid + "has started between" + older.time + " and " + newer.time)
+    older_list = next(iter(older.values()))
+    newer_list = next(iter(newer.values()))
+    for pro in older_list:
+        if pro not in newer_list:
+            diff_list.append(pro + " has stopped between " + older.keys() + " and " + newer.keys())
+    for pro in newer_list:
+        if pro not in older_list:
+            diff_list.append(pro + "has started between" + older.keys() + " and " + newer.keys())
     return diff_list
 
 
@@ -25,31 +24,31 @@ def get_current_services():
 
 
 def write_to_serviceList(ts_obj):
-    file = open("serviceList", "a")
-    file.write(ts_obj.get_as_dict + "\n")
+    file = open("serviceList.txt", "a")
+    file.write(str(ts_obj) + "\n")
     file.close()
 
 
 def write_to_statusLog(diff_list):
     file = open("Status_Log.txt", "a")
-    file.write(diff_list + "\n")
+    for line in diff_list:
+        file.write(line + "\n")
     file.close()
 
 
 def monitor(time_diff):
-    crnt_ts = TIME_STAMP
-    prev_ts = crnt_ts
+    current = {}
+    prev = current
     while True:
         current_time = datetime.now()
         pro_list = get_current_services()
-        crnt_ts = TIME_STAMP(time=current_time, pro_list=pro_list)
+        current.update({current_time: pro_list})
+        write_to_serviceList(current)
 
-        write_to_serviceList(crnt_ts.get_as_dict())
-
-        diffs = diff(crnt_ts, prev_ts)
+        diffs = diff(current, prev)
         write_to_statusLog(diffs)
 
-        prev_ts = crnt_ts
+        prev = current
         time.sleep(time_diff)
 
 
@@ -76,6 +75,6 @@ if __name__ == '__main__':
         manual(start, end)
     elif mode == 2:
         timer = input("Please enter frequency check in seconds: ")
-        monitor(timer)
+        monitor(int(timer))
     else:
         print("are you stupid?")
