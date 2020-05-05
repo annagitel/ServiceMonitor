@@ -5,21 +5,29 @@ import psutil
 
 def diff(older, newer):
     diff_list = []
+    older_time = next(iter(older.keys()))
+    newer_time = next(iter(newer.keys()))
     older_list = next(iter(older.values()))
     newer_list = next(iter(newer.values()))
-    for pro in older_list:
-        if pro not in newer_list:
-            diff_list.append(pro + " has stopped between " + older.keys() + " and " + newer.keys())
-    for pro in newer_list:
-        if pro not in older_list:
-            diff_list.append(pro + "has started between" + older.keys() + " and " + newer.keys())
+    for k in older_list:
+        if k not in newer_list:
+            diff_list.append(str(k) + " : " + str(older_list[k]) + " has stopped between " +
+                             older_time.strftime("%d/%m/%Y %H:%M:%S") + " and " +
+                             newer_time.strftime("%d/%m/%Y %H:%M:%S"))
+    for k in newer_list:
+        if k not in older_list:
+            diff_list.append(str(k) + " : " + str(newer_list[k]) + " has started between " +
+                             older_time.strftime("%d/%m/%Y %H:%M:%S") + " and " +
+                             newer_time.strftime("%d/%m/%Y %H:%M:%S"))
     return diff_list
 
 
 def get_current_services():
-    process_list = []
+    process_list = {}
     for proc in psutil.process_iter():
-        process_list.append(proc.as_dict(['pid', 'name']))
+        pid = proc.pid
+        name = proc.name()
+        process_list.update({pid: name})
     return process_list
 
 
@@ -32,21 +40,23 @@ def write_to_serviceList(ts_obj):
 def write_to_statusLog(diff_list):
     file = open("Status_Log.txt", "a")
     for line in diff_list:
-        file.write(line + "\n")
+        file.write(line + " \n")
     file.close()
 
 
-def monitor(time_diff):
-    current = {}
-    prev = current
+def monitor(time_diff=10):
+    isFirst = True
     while True:
         current_time = datetime.now()
         pro_list = get_current_services()
-        current.update({current_time: pro_list})
-        write_to_serviceList(current)
-
-        diffs = diff(current, prev)
-        write_to_statusLog(diffs)
+        current = {current_time: pro_list}
+        towrite = {current_time.strftime("%d/%m/%Y %H:%M:%S"): pro_list}
+        write_to_serviceList(towrite)
+        if isFirst:
+            isFirst = False
+        else:
+            diffs = diff(prev, current)
+            write_to_statusLog(diffs)
 
         prev = current
         time.sleep(time_diff)
@@ -55,13 +65,17 @@ def monitor(time_diff):
 def manual(start_time, end_time):
     log_list = []
     file = open("Status_Log.txt", "r")
-    for _ in file:
-        log = file.readline()
+    log = file.readline()
+    user_start = datetime.strptime(start_time, "%d/%m/%Y %H:%M:%S")
+    user_end = datetime.strptime(end_time, "%d/%m/%Y %H:%M:%S")
+    while log:
         splited = log.split(' ')
-        older = splited[4]
-        newer = splited[6]
-        if older > start_time and newer < end_time:
+        older = datetime.strptime(splited[6] + " " + splited[7], "%d/%m/%Y %H:%M:%S")
+        newer = datetime.strptime(splited[9] + " " + splited[10], "%d/%m/%Y %H:%M:%S")
+        if older < user_start < newer or (older > user_start and newer < user_end) or older < user_end < newer:
             log_list.append(log.split('between')[0])
+        log = file.readline()
+
     return log_list
 
 
@@ -72,7 +86,9 @@ if __name__ == '__main__':
     elif mode == 1:
         start = input("Please enter the first date in d/m/Y H:M:S format")
         end = input("Please enter the second date in d/m/Y H:M:S format")
-        manual(start, end)
+        out = manual(start, end)
+        for item in out:
+            print(item)
     elif mode == 2:
         timer = input("Please enter frequency check in seconds: ")
         monitor(int(timer))
