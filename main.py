@@ -56,6 +56,8 @@ def monitor(time_diff=10):
             isFirst = False
         else:
             diffs = diff(prev, current)
+            for line in diffs:
+                print(line)
             write_to_statusLog(diffs)
 
         prev = current
@@ -68,14 +70,26 @@ def manual(start_time, end_time):
     log = file.readline()
     user_start = datetime.strptime(start_time, "%d/%m/%Y %H:%M:%S")
     user_end = datetime.strptime(end_time, "%d/%m/%Y %H:%M:%S")
+    old_sample = []
+    new_sample = []
     while log:
         splited = log.split(' ')
         older = datetime.strptime(splited[6] + " " + splited[7], "%d/%m/%Y %H:%M:%S")
         newer = datetime.strptime(splited[9] + " " + splited[10], "%d/%m/%Y %H:%M:%S")
-        if older < user_start < newer or (older > user_start and newer < user_end) or older < user_end < newer:
-            log_list.append(log.split('between')[0])
-        log = file.readline()
+        if older <= user_start <= newer:
+            old_sample.append(log.split('between')[0])
 
+        elif older < user_end < newer:
+            new_sample.append(log.split('between')[0])
+
+        log = file.readline()
+    print("first sample: " + '\n')
+    for line in old_sample:
+        print(line)
+    print('\n')
+    print("second sample: " + '\n')
+    for line in new_sample:
+        print(line)
     return log_list
 
 
