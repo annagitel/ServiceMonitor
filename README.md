@@ -6,9 +6,7 @@ Used to monitor and analyze all the services running on the server.
 supported on Windows & Linux
 
 The monitor has two modes: 
-1. Monitor - automatic mode that will sample all the processes every X time you pick 
-and will write it to a log file named serviceList.txt, 
-and all the changes will be writen to Status_Log.txt
+1. Monitor - automatic mode that will sample all the processes every X time you pick , will write it to a log file named serviceList.txt, and all the changes will be writen to Status_Log.txt
 
 2. manual - you will be asked to enter 2 time samples, 
 the program will return all the process changes between the two samples
@@ -24,11 +22,12 @@ the program samples the processes running on the server using the `psutil` libra
 the times are calculated using the python `datetime` default library 
 
 the program running from one main function that calls 2 functions - one for every mode
-* `monitor()` - uses the get_current_services function to sample all the currently
+* `monitor(time_diff=10)` - uses the get_current_services function to sample all the currently
 running processes on the server and then writes them, using the write_to_servicelist function to the log
+the default time diff is 10 seconds but the user can pick his own time 
 * `manual(start_time, end_time)` - the function gets two time objects, findes in the serviceList the 
 closest 2 samples to the times, and using the diff function, returns the diffrences between the 
-two samples
+two samples  
 another helping functions are 
 * `diff(older, newer)` - the function gets 2 dicts where the key is time 
 and the value is a dict of processes {pid:name} and returns a list of differences
