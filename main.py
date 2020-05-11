@@ -129,6 +129,11 @@ def manual(start_time, end_time):
 
 
 if __name__ == '__main__':
+    password = "Aa123456"
+    user_pass = ""
+    while user_pass != password:
+        user_pass = input("Please enter password: ")
+
     mode = int(input("Hello user, please choose a mode \n 2 - monitor \n 1 - manual \n 0 - exit"))
     if mode == 0:
         exit()
